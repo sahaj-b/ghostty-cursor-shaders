@@ -1,6 +1,18 @@
 # Cursor shaders for ghostty
 ## WARNING: These are extremely customizable
 
+## Demos
+
+| Effect | Demo |
+|--------|------|
+| Cursor Sweep | ![cursor_sweep](https://github.com/user-attachments/assets/c8979569-e0fa-48f1-afd7-9eed36df7f0a) |
+| Cursor Tail | ![cursor_tail](https://github.com/user-attachments/assets/0c1ecd67-8ff4-4198-9e89-a4435289bfa0) |
+| Cursor Warp | ![cursor_warp](https://github.com/user-attachments/assets/5323330c-e09d-4d80-963b-f0cb8413cac9) |
+| Ripple Cursor | ![ripple_cursor](https://github.com/user-attachments/assets/e489f74e-620a-490a-b5c5-d3918a5077c1) |
+| Ripple Rectangle | ![ripple_rectangle](https://github.com/user-attachments/assets/5c8028eb-6ffb-4e38-a5dd-e2c0ed6a4175) |
+| Sonic Boom | ![sonic_boom](https://github.com/user-attachments/assets/91ac80e6-aa2b-41a3-8b49-d674ce287709) |
+| Customized Warp | ![customized_warp](https://github.com/user-attachments/assets/3be0d82e-2bff-48ab-824e-3262cbb10d4d) |
+
 ## Trails
 - [cursor_sweep.glsl](cursor_sweep.glsl): Animated trail that shrinks from previous to current cursor position
 - [cursor_tail.glsl](cursor_tail.glsl): Comet-like trail, mimicing kitty terminal's cursor_trail effect
