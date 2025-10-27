@@ -1,7 +1,8 @@
 // -- CONFIGURATION --
 vec4 TRAIL_COLOR = iCurrentCursorColor; // can change to eg: vec4(0.2, 0.6, 1.0, 0.5);
-const float DURATION = 0.1; //IN SECONDS
-const float MAX_TRAIL_LENGTH = 0.2; // TUNE THIS
+const float DURATION = 0.09; // in seconds
+const float MAX_TRAIL_LENGTH = 0.2;
+const float THRESHOLD_MIN_DISTANCE = 1.5; // min distance to show trail (units of cursor width)
 
 // --- CONSTANTS for easing functions ---
 const float PI = 3.14159265359;
@@ -21,14 +22,15 @@ const float SPRING_DAMPING = 0.9;
 // }
 
 // // EaseOutQuad
-float ease(float x) {
-    return 1.0 - (1.0 - x) * (1.0 - x);
-}
+// float ease(float x) {
+//     return 1.0 - (1.0 - x) * (1.0 - x);
+// }
 
 // // EaseOutCubic
 // float ease(float x) {
 //     return 1.0 - pow(1.0 - x, 3.0);
 // }
+
 
 // // EaseOutQuart
 // float ease(float x) {
@@ -51,16 +53,16 @@ float ease(float x) {
 // }
 
 // EaseOutCirc
-// float ease(float x) {
-//     return sqrt(1.0 - pow(x - 1.0, 2.0));
-// }
+float ease(float x) {
+    return sqrt(1.0 - pow(x - 1.0, 2.0));
+}
 
-// EaseOutBack
+// // EaseOutBack
 // float ease(float x) {
 //     return 1.0 + C3_BACK * pow(x - 1.0, 3.0) + C1_BACK * pow(x - 1.0, 2.0);
 // }
 
-// EaseOutElastic
+// // EaseOutElastic
 // float ease(float x) {
 //     return x == 0.0 ? 0.0
 //          : x == 1.0 ? 1.0
@@ -223,7 +225,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord){
     float sdfTrail = mix(sdfTrail_diag, sdfTrail_rect, isStraightMove);
     
     // kill trail on short moves
-    float minDist = currentCursor.w * 1.5;
+    float minDist = currentCursor.w * THRESHOLD_MIN_DISTANCE;
     float trailVisibility = smoothstep(minDist, minDist + currentCursor.w, lineLength); 
 
     vec4 newColor = vec4(fragColor);

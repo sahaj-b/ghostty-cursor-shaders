@@ -1,6 +1,6 @@
 // --- CONFIGURATION ---
 vec4 TRAIL_COLOR = iCurrentCursorColor; // can change to eg: vec4(0.2, 0.6, 1.0, 0.5);
-const float DURATION = 0.1;   // total animation time (Neovide's `animation_length`)
+const float DURATION = 0.2;   // total animation time (Neovide's `animation_length`)
 const float TRAIL_SIZE = 0.8; // 0.0 = all corners move together. 1.0 = max smear (leading corners jump instantly)
 const float THRESHOLD_MIN_DISTANCE = 1.5; // min distance to show trail (units of cursor width)
 
@@ -41,20 +41,20 @@ const float SPRING_DAMPING = 0.9;
 //     return 1.0 - pow(1.0 - x, 5.0);
 // }
 
-// EaseOutSine
-float ease(float x) {
-    return sin((x * PI) / 2.0);
-}
+// // EaseOutSine
+// float ease(float x) {
+//     return sin((x * PI) / 2.0);
+// }
 
 // // EaseOutExpo
 // float ease(float x) {
 //     return x == 1.0 ? 1.0 : 1.0 - pow(2.0, -10.0 * x);
 // }
 
-// // EaseOutCirc
-// float ease(float x) {
-//     return sqrt(1.0 - pow(x - 1.0, 2.0));
-// }
+// EaseOutCirc
+float ease(float x) {
+    return sqrt(1.0 - pow(x - 1.0, 2.0));
+}
 
 // // EaseOutBack
 // float ease(float x) {

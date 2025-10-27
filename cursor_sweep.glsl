@@ -1,6 +1,6 @@
 // -- CONFIGURATION ---
 vec4 TRAIL_COLOR = iCurrentCursorColor; // can change to eg: vec4(0.2, 0.6, 1.0, 0.5);
-const float DURATION = 0.1; //IN SECONDS
+const float DURATION = 0.2; // in seconds
 const float TRAIL_LENGTH = 0.5;
 
 // --- CONSTANTS for easing functions ---
@@ -25,10 +25,10 @@ const float SPRING_DAMPING = 0.9;
 //     return 1.0 - (1.0 - x) * (1.0 - x);
 // }
 
-// // EaseOutCubic
-// float ease(float x) {
-//     return 1.0 - pow(1.0 - x, 3.0);
-// }
+// EaseOutCubic
+float ease(float x) {
+    return 1.0 - pow(1.0 - x, 3.0);
+}
 
 // // EaseOutQuart
 // float ease(float x) {
@@ -41,9 +41,9 @@ const float SPRING_DAMPING = 0.9;
 // }
 
 // EaseOutSine
-float ease(float x) {
-    return sin((x * PI) / 2.0);
-}
+// float ease(float x) {
+//     return sin((x * PI) / 2.0);
+// }
 
 // // EaseOutExpo
 // float ease(float x) {
