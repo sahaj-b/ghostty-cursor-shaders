@@ -16,8 +16,18 @@
 ## Customization
 - All shaders has customizable parameters (like color, duration, size, blur, etc) etc at the top of each file. You can adjust
 - Also, all files has various **Easing Functions** to choose from.
+  - these function control the animation curve of the effects, you can make them elasitcy, springy, smooth, linear, etc by changing the easing function
   - in trail shaders, you can comment/uncomment the easing functions in the code
   - in pulse/boom shaders, you can comment/uncomment the lines in the `ANIMATION` section
+  - you can also add your own easing functions if you want
 
-# Acknowledgements
+## Acknowledgements
 Inspired by [KroneCorylus/ghostty-shader-playground](https://github.com/KroneCorylus/ghostty-shader-playground)
+
+## License
+MIT
+
+## Why use branching(if/else) instead of branchless math
+- coz we are dealing with **uniform branching** here, which has **NO DIVERGENCE**.
+- ie, all fragments will take the same branch path, so no performance penalty on modern GPUs
+- Branchless math would force GPU to calculate animations every single frame, even when there is no need

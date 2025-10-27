@@ -98,13 +98,9 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord){
     // ANIMATION
     float rippleProgress = (iTime - iTimeCursorChange) / DURATION + ANIMATION_START_OFFSET;
     // don't clamp yet; we need to know if it's > 1.0 (finished)
-    float isAnimating = 1.0 - step(1.0, rippleProgress); // progress < 1.0 ? 1.0: 0.0
-    
-    // WHY NOT BRANCHLESS??? here ya go:
-    // because we NEVER have divergence, even in this if/else branchfull logic
-    // why? because its UNIFORM branching (ie, all fragments take the same path) which modern GPUs handles efficiently
-    // its far more efficient than calculating the ripple EVERY FRAME even when not needed(branchless)
-    if (isModeChange > 0.0 && isAnimating > 0.0) {
+     float isAnimating = 1.0 - step(1.0, rippleProgress); // progress < 1.0 ? 1.0: 0.0
+     
+     if (isModeChange > 0.0 && isAnimating > 0.0) {
         // Apply easing to progress
         // float easedProgress = rippleProgress;
         // float easedProgress = easeOutQuad(rippleProgress);
