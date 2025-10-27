@@ -155,90 +155,85 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord){
     vec2 centerCP = previousCursor.xy - (previousCursor.zw * offsetFactor);
     vec2 halfSizeCP = previousCursor.zw * 0.5;
 
-    // defining corners of cursors
-    vec2 cc_tl = currentCursor.xy;
-    vec2 cc_tr = vec2(currentCursor.x + currentCursor.z, currentCursor.y);
-    vec2 cc_bl = vec2(currentCursor.x, currentCursor.y - currentCursor.w);
-    vec2 cc_br = vec2(currentCursor.x + currentCursor.z, currentCursor.y - currentCursor.w);
-
-    vec2 cp_tl = previousCursor.xy;
-    vec2 cp_tr = vec2(previousCursor.x + previousCursor.z, previousCursor.y);
-    vec2 cp_bl = vec2(previousCursor.x, previousCursor.y - previousCursor.w);
-    vec2 cp_br = vec2(previousCursor.x + previousCursor.z, previousCursor.y - previousCursor.w);
-
-    // calculating durations for every corner
-    const float DURATION_TRAIL = DURATION;
-    const float DURATION_LEAD = DURATION * (1.0 - TRAIL_SIZE);
-    const float DURATION_SIDE = (DURATION_LEAD + DURATION_TRAIL) / 2.0;
-
-    vec2 moveVec = centerCC - centerCP;
-    vec2 s = sign(moveVec); // movement direction quadrant
-
-    // dot products for each corner, determining alignment with movement direction
-    float dot_tl = dot(vec2(-1., 1.), s);
-    float dot_tr = dot(vec2( 1., 1.), s);
-    float dot_bl = dot(vec2(-1.,-1.), s);
-    float dot_br = dot(vec2( 1.,-1.), s);
-
-    // assign durations based on dot products
-    float dur_tl = getDurationFromDot(dot_tl, DURATION_LEAD, DURATION_SIDE, DURATION_TRAIL);
-    float dur_tr = getDurationFromDot(dot_tr, DURATION_LEAD, DURATION_SIDE, DURATION_TRAIL);
-    float dur_bl = getDurationFromDot(dot_bl, DURATION_LEAD, DURATION_SIDE, DURATION_TRAIL);
-    float dur_br = getDurationFromDot(dot_br, DURATION_LEAD, DURATION_SIDE, DURATION_TRAIL);
-
-    // ANIMATION LESGOOO
-    // check direction of horizontal movement
-    float isMovingRight = step(0.5, s.x); // 1.0 if s.x == 1.0 (right edge leads)
-    float isMovingLeft  = step(0.5, -s.x); // 1.0 if s.x == -1.0 (left edge leads)
-
-    // calculate vertical-rail durations (vertical-rail: the side of the trail that looks attached to the cursor)
-    float dot_right_edge = (dot_tr + dot_br) * 0.5;
-    float dur_right_rail = getDurationFromDot(dot_right_edge, DURATION_LEAD, DURATION_SIDE, DURATION_TRAIL);
+    float sdfCurrentCursor = getSdfRectangle(vu, centerCC, halfSizeCC);
     
-    float dot_left_edge = (dot_tl + dot_bl) * 0.5;
-    float dur_left_rail = getDurationFromDot(dot_left_edge, DURATION_LEAD, DURATION_SIDE, DURATION_TRAIL);
-
-    // select if the vertial-rail is left edge or right edge
-    // its like a 2-1 MUX
-
-    float final_dur_tl = mix(dur_tl, dur_left_rail, isMovingLeft);
-    float final_dur_bl = mix(dur_bl, dur_left_rail, isMovingLeft);
-    
-    float final_dur_tr = mix(dur_tr, dur_right_rail, isMovingRight);
-    float final_dur_br = mix(dur_br, dur_right_rail, isMovingRight);
-
-    // calculate progress for each corner based on the duration and time since cursor change
-    // baseProgress / final_dur_xx = [0,1] progress value for each corner
-    float baseProgress = iTime - iTimeCursorChange;
-    float prog_tl = ease(clamp(baseProgress / final_dur_tl, 0.0, 1.0));
-    float prog_tr = ease(clamp(baseProgress / final_dur_tr, 0.0, 1.0));
-    float prog_bl = ease(clamp(baseProgress / final_dur_bl, 0.0, 1.0));
-    float prog_br = ease(clamp(baseProgress / final_dur_br, 0.0, 1.0));
-
-    // get the trial corner positions based on progress
-    vec2 v_tl = mix(cp_tl, cc_tl, prog_tl);
-    vec2 v_tr = mix(cp_tr, cc_tr, prog_tr);
-    vec2 v_br = mix(cp_br, cc_br, prog_br);
-    vec2 v_bl = mix(cp_bl, cc_bl, prog_bl);
-
-
-    // DRAWING THE TRAIL
-    float sdfTrail = getSdfConvexQuad(vu, v_tl, v_tr, v_br, v_bl);
-
-    // kill trail on short moves
     float lineLength = distance(centerCC, centerCP);
     float minDist = currentCursor.w * THRESHOLD_MIN_DISTANCE;
-    // float isTrailVisble = smoothstep(minDist, minDist + currentCursor.w, lineLength); // this creates trasluct trails on short moves, meh
-    float isTrailVisble = step(minDist, lineLength);
+    
     vec4 newColor = vec4(fragColor);
-    vec4 trail = TRAIL_COLOR;
+    
+    if (lineLength > minDist) {
+        // defining corners of cursors
+        vec2 cc_tl = currentCursor.xy;
+        vec2 cc_tr = vec2(currentCursor.x + currentCursor.z, currentCursor.y);
+        vec2 cc_bl = vec2(currentCursor.x, currentCursor.y - currentCursor.w);
+        vec2 cc_br = vec2(currentCursor.x + currentCursor.z, currentCursor.y - currentCursor.w);
 
-    float trailAlpha = antialising(sdfTrail) * isTrailVisble;
-    newColor = mix(newColor, trail, trailAlpha);
+        vec2 cp_tl = previousCursor.xy;
+        vec2 cp_tr = vec2(previousCursor.x + previousCursor.z, previousCursor.y);
+        vec2 cp_bl = vec2(previousCursor.x, previousCursor.y - previousCursor.w);
+        vec2 cp_br = vec2(previousCursor.x + previousCursor.z, previousCursor.y - previousCursor.w);
 
-    float sdfCurrentCursor = getSdfRectangle(vu, centerCC, halfSizeCC);
-    // punch hole on the trail, so current cursor is drawn on top, so we can see the actual cursor
-    newColor = mix(newColor, fragColor, step(sdfCurrentCursor, 0.));
+        // calculating durations for every corner
+        const float DURATION_TRAIL = DURATION;
+        const float DURATION_LEAD = DURATION * (1.0 - TRAIL_SIZE);
+        const float DURATION_SIDE = (DURATION_LEAD + DURATION_TRAIL) / 2.0;
+
+        vec2 moveVec = centerCC - centerCP;
+        vec2 s = sign(moveVec);
+
+        // dot products for each corner, determining alignment with movement direction
+        float dot_tl = dot(vec2(-1., 1.), s);
+        float dot_tr = dot(vec2( 1., 1.), s);
+        float dot_bl = dot(vec2(-1.,-1.), s);
+        float dot_br = dot(vec2( 1.,-1.), s);
+
+        // assign durations based on dot products
+        float dur_tl = getDurationFromDot(dot_tl, DURATION_LEAD, DURATION_SIDE, DURATION_TRAIL);
+        float dur_tr = getDurationFromDot(dot_tr, DURATION_LEAD, DURATION_SIDE, DURATION_TRAIL);
+        float dur_bl = getDurationFromDot(dot_bl, DURATION_LEAD, DURATION_SIDE, DURATION_TRAIL);
+        float dur_br = getDurationFromDot(dot_br, DURATION_LEAD, DURATION_SIDE, DURATION_TRAIL);
+
+        // check direction of horizontal movement
+        float isMovingRight = step(0.5, s.x);
+        float isMovingLeft  = step(0.5, -s.x);
+
+        // calculate vertical-rail durations
+        float dot_right_edge = (dot_tr + dot_br) * 0.5;
+        float dur_right_rail = getDurationFromDot(dot_right_edge, DURATION_LEAD, DURATION_SIDE, DURATION_TRAIL);
+        
+        float dot_left_edge = (dot_tl + dot_bl) * 0.5;
+        float dur_left_rail = getDurationFromDot(dot_left_edge, DURATION_LEAD, DURATION_SIDE, DURATION_TRAIL);
+
+        float final_dur_tl = mix(dur_tl, dur_left_rail, isMovingLeft);
+        float final_dur_bl = mix(dur_bl, dur_left_rail, isMovingLeft);
+        
+        float final_dur_tr = mix(dur_tr, dur_right_rail, isMovingRight);
+        float final_dur_br = mix(dur_br, dur_right_rail, isMovingRight);
+
+        // calculate progress for each corner based on the duration and time since cursor change
+        float baseProgress = iTime - iTimeCursorChange;
+        float prog_tl = ease(clamp(baseProgress / final_dur_tl, 0.0, 1.0));
+        float prog_tr = ease(clamp(baseProgress / final_dur_tr, 0.0, 1.0));
+        float prog_bl = ease(clamp(baseProgress / final_dur_bl, 0.0, 1.0));
+        float prog_br = ease(clamp(baseProgress / final_dur_br, 0.0, 1.0));
+
+        // get the trial corner positions based on progress
+        vec2 v_tl = mix(cp_tl, cc_tl, prog_tl);
+        vec2 v_tr = mix(cp_tr, cc_tr, prog_tr);
+        vec2 v_br = mix(cp_br, cc_br, prog_br);
+        vec2 v_bl = mix(cp_bl, cc_bl, prog_bl);
+
+        // DRAWING THE TRAIL
+        float sdfTrail = getSdfConvexQuad(vu, v_tl, v_tr, v_br, v_bl);
+
+        vec4 trail = TRAIL_COLOR;
+        float trailAlpha = antialising(sdfTrail);
+        newColor = mix(newColor, trail, trailAlpha);
+
+        // punch hole on the trail, so current cursor is drawn on top
+        newColor = mix(newColor, fragColor, step(sdfCurrentCursor, 0.));
+    }
 
     fragColor = newColor;
 }

@@ -151,65 +151,65 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord){
     vec2 centerCP = previousCursor.xy - (previousCursor.zw * offsetFactor);
 
     float sdfCurrentCursor = getSdfRectangle(vu, centerCC, currentCursor.zw * 0.5);
-
-    // --- Animation Logic ---
-    float progress = clamp((iTime - iTimeCursorChange) / DURATION, 0.0, 1.0);
-    float shrinkFactor = ease(progress);
+    
     float lineLength = distance(centerCC, centerCP);
-
-    // detect straight moves
-    vec2 delta = abs(centerCC - centerCP);
-    float threshold = 0.001;
-    float isHorizontal = step(delta.y, threshold);
-    float isVertical = step(delta.x, threshold);
-    float isStraightMove = max(isHorizontal, isVertical);
-
-    // -- Making parallelogram sdf (diagonal moves) ---
-    float topVertexFlag = getTopVertexFlag(currentCursor.xy, previousCursor.xy);
-    float bottomVertexFlag = 1.0 - topVertexFlag;
-    vec2 v0 = vec2(currentCursor.x + currentCursor.z * topVertexFlag, currentCursor.y - currentCursor.w);
-    vec2 v1 = vec2(currentCursor.x + currentCursor.z * bottomVertexFlag, currentCursor.y);
-    vec2 v2_full = vec2(previousCursor.x + currentCursor.z * bottomVertexFlag, previousCursor.y);
-    vec2 v3_full = vec2(previousCursor.x + currentCursor.z * topVertexFlag, previousCursor.y - previousCursor.w);
-
-    vec2 v2_start = mix(v1, v2_full, TRAIL_LENGTH);
-    vec2 v3_start = mix(v0, v3_full, TRAIL_LENGTH);
-    vec2 v2_anim = mix(v2_start, v1, shrinkFactor);
-    vec2 v3_anim = mix(v3_start, v0, shrinkFactor);
     
-    float sdfTrail_diag = getSdfParallelogram(vu, v0, v1, v2_anim, v3_anim);
-
-    // --- Making rectangle sdf (straight moves) ---
-    vec2 min_center = min(centerCP, centerCC);
-    vec2 max_center = max(centerCP, centerCC);
-
-    vec2 bBoxSize_full = (max_center - min_center) + currentCursor.zw;
-    vec2 bBoxCenter_full = (min_center + max_center) * 0.5;
-
-    vec2 bBoxSize_start = mix(currentCursor.zw, bBoxSize_full, TRAIL_LENGTH);
-    vec2 bBoxCenter_start = mix(centerCC, bBoxCenter_full, TRAIL_LENGTH);
-
-    vec2 animSize = mix(bBoxSize_start, currentCursor.zw, shrinkFactor);
-    vec2 animCenter = mix(bBoxCenter_start, centerCC, shrinkFactor);
-
-    float sdfTrail_rect = getSdfRectangle(vu, animCenter, animSize * 0.5);
-
-    // -- Selecting and drawing the trail sdf --
-    float sdfTrail = mix(sdfTrail_diag, sdfTrail_rect, isStraightMove);
-    
-    // kill trail on short moves
-    float minDist = currentCursor.w * 1.5;
-    float trailVisibility = smoothstep(minDist, minDist + currentCursor.w, lineLength);
-
     vec4 newColor = vec4(fragColor);
-    vec4 trail = TRAIL_COLOR;
+    
+    float minDist = currentCursor.w * 1.5;
+    if (lineLength > minDist) {
+        // --- Animation Logic ---
+        float progress = clamp((iTime - iTimeCursorChange) / DURATION, 0.0, 1.0);
+        float shrinkFactor = ease(progress);
 
-    // draw trail
-    float trailAlpha = antialising(sdfTrail) * trailVisibility;
-    newColor = mix(newColor, trail, trailAlpha);
+        // detect straight moves
+        vec2 delta = abs(centerCC - centerCP);
+        float threshold = 0.001;
+        float isHorizontal = step(delta.y, threshold);
+        float isVertical = step(delta.x, threshold);
+        float isStraightMove = max(isHorizontal, isVertical);
 
-    // Punch hole
-    newColor = mix(newColor, fragColor, step(sdfCurrentCursor, 0.));
+        // -- Making parallelogram sdf (diagonal moves) ---
+        float topVertexFlag = getTopVertexFlag(currentCursor.xy, previousCursor.xy);
+        float bottomVertexFlag = 1.0 - topVertexFlag;
+        vec2 v0 = vec2(currentCursor.x + currentCursor.z * topVertexFlag, currentCursor.y - currentCursor.w);
+        vec2 v1 = vec2(currentCursor.x + currentCursor.z * bottomVertexFlag, currentCursor.y);
+        vec2 v2_full = vec2(previousCursor.x + currentCursor.z * bottomVertexFlag, previousCursor.y);
+        vec2 v3_full = vec2(previousCursor.x + currentCursor.z * topVertexFlag, previousCursor.y - previousCursor.w);
+
+        vec2 v2_start = mix(v1, v2_full, TRAIL_LENGTH);
+        vec2 v3_start = mix(v0, v3_full, TRAIL_LENGTH);
+        vec2 v2_anim = mix(v2_start, v1, shrinkFactor);
+        vec2 v3_anim = mix(v3_start, v0, shrinkFactor);
+        
+        float sdfTrail_diag = getSdfParallelogram(vu, v0, v1, v2_anim, v3_anim);
+
+        // --- Making rectangle sdf (straight moves) ---
+        vec2 min_center = min(centerCP, centerCC);
+        vec2 max_center = max(centerCP, centerCC);
+
+        vec2 bBoxSize_full = (max_center - min_center) + currentCursor.zw;
+        vec2 bBoxCenter_full = (min_center + max_center) * 0.5;
+
+        vec2 bBoxSize_start = mix(currentCursor.zw, bBoxSize_full, TRAIL_LENGTH);
+        vec2 bBoxCenter_start = mix(centerCC, bBoxCenter_full, TRAIL_LENGTH);
+
+        vec2 animSize = mix(bBoxSize_start, currentCursor.zw, shrinkFactor);
+        vec2 animCenter = mix(bBoxCenter_start, centerCC, shrinkFactor);
+
+        float sdfTrail_rect = getSdfRectangle(vu, animCenter, animSize * 0.5);
+
+        // -- Selecting and drawing the trail sdf --
+        float sdfTrail = mix(sdfTrail_diag, sdfTrail_rect, isStraightMove);
+
+        vec4 trail = TRAIL_COLOR;
+        float trailAlpha = antialising(sdfTrail);
+        newColor = mix(newColor, trail, trailAlpha);
+
+        // Punch hole
+        newColor = mix(newColor, fragColor, step(sdfCurrentCursor, 0.));
+    }
+
 
     fragColor = newColor;
 }
