@@ -3,6 +3,7 @@ vec4 TRAIL_COLOR = iCurrentCursorColor; // can change to eg: vec4(0.2, 0.6, 1.0,
 const float DURATION = 0.2;   // total animation time (Neovide's `animation_length`)
 const float TRAIL_SIZE = 0.8; // 0.0 = all corners move together. 1.0 = max smear (leading corners jump instantly)
 const float THRESHOLD_MIN_DISTANCE = 1.5; // min distance to show trail (units of cursor width)
+const float BLUR = 2.0; // blur size in pixels (for antialiasing)
 
 // --- CONSTANTS for easing functions ---
 const float PI = 3.14159265359;
@@ -119,7 +120,7 @@ vec2 normalize(vec2 value, float isPosition) {
 }
 
 float antialising(float distance) {
-    return 1. - smoothstep(0., normalize(vec2(2., 2.), 0.).x, distance);
+    return 1. - smoothstep(0., normalize(vec2(BLUR, BLUR), 0.).x, distance);
 }
 
 // Determines animation duration based on a corner's alignment with the move direction(dot product)
@@ -161,8 +162,10 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord){
     float minDist = currentCursor.w * THRESHOLD_MIN_DISTANCE;
     
     vec4 newColor = vec4(fragColor);
+
+    float baseProgress = iTime - iTimeCursorChange;
     
-    if (lineLength > minDist) {
+    if (lineLength > minDist && baseProgress <= DURATION) {
         // defining corners of cursors
         vec2 cc_tl = currentCursor.xy;
         vec2 cc_tr = vec2(currentCursor.x + currentCursor.z, currentCursor.y);
@@ -212,7 +215,6 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord){
         float final_dur_br = mix(dur_br, dur_right_rail, isMovingRight);
 
         // calculate progress for each corner based on the duration and time since cursor change
-        float baseProgress = iTime - iTimeCursorChange;
         float prog_tl = ease(clamp(baseProgress / final_dur_tl, 0.0, 1.0));
         float prog_tr = ease(clamp(baseProgress / final_dur_tr, 0.0, 1.0));
         float prog_bl = ease(clamp(baseProgress / final_dur_bl, 0.0, 1.0));

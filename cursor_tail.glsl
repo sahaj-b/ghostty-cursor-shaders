@@ -3,6 +3,7 @@ vec4 TRAIL_COLOR = iCurrentCursorColor; // can change to eg: vec4(0.2, 0.6, 1.0,
 const float DURATION = 0.09; // in seconds
 const float MAX_TRAIL_LENGTH = 0.2;
 const float THRESHOLD_MIN_DISTANCE = 1.5; // min distance to show trail (units of cursor width)
+const float BLUR = 2.0; // blur size in pixels (for antialiasing)
 
 // --- CONSTANTS for easing functions ---
 const float PI = 3.14159265359;
@@ -121,7 +122,7 @@ vec2 normalize(vec2 value, float isPosition) {
 }
 
 float antialising(float distance) {
-    return 1. - smoothstep(0., normalize(vec2(2., 2.), 0.).x, distance);
+	return 1. - smoothstep(0., normalize(vec2(BLUR, BLUR), 0.).x, distance);
 }
 
 float determineIfTopRightIsLeading(vec2 a, vec2 b) {
@@ -155,14 +156,14 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord){
     vec2 delta = centerCP - centerCC;
     float lineLength = length(delta);
 
-    float sdfCurrentCursor = getSdfRectangle(vu, centerCC, currentCursor.zw * 0.5);
-    
-    vec4 newColor = vec4(fragColor);
-    
-    float minDist = currentCursor.w * THRESHOLD_MIN_DISTANCE;
-    if (lineLength > minDist) {
-        // ANIMATION logic
-        float progress = clamp((iTime - iTimeCursorChange) / DURATION, 0.0, 1.0);
+     float sdfCurrentCursor = getSdfRectangle(vu, centerCC, currentCursor.zw * 0.5);
+	
+     vec4 newColor = vec4(fragColor);
+	
+     float minDist = currentCursor.w * THRESHOLD_MIN_DISTANCE;
+     float progress = clamp((iTime - iTimeCursorChange) / DURATION, 0.0, 1.0);
+     if (lineLength > minDist) {
+         // ANIMATION logic
         
         float head_eased = 0.0;
         float tail_eased = 0.0;

@@ -2,6 +2,7 @@
 vec4 TRAIL_COLOR = iCurrentCursorColor; // can change to eg: vec4(0.2, 0.6, 1.0, 0.5);
 const float DURATION = 0.2; // in seconds
 const float TRAIL_LENGTH = 0.5;
+const float BLUR = 2.0; // blur size in pixels (for antialiasing)
 
 // --- CONSTANTS for easing functions ---
 const float PI = 3.14159265359;
@@ -119,7 +120,7 @@ vec2 normalize(vec2 value, float isPosition) {
 }
 
 float antialising(float distance) {
-    return 1. - smoothstep(0., normalize(vec2(2., 2.), 0.).x, distance);
+	return 1. - smoothstep(0., normalize(vec2(BLUR, BLUR), 0.).x, distance);
 }
 
 float getTopVertexFlag(vec2 a, vec2 b) {
@@ -152,15 +153,15 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord){
 
     float sdfCurrentCursor = getSdfRectangle(vu, centerCC, currentCursor.zw * 0.5);
     
-    float lineLength = distance(centerCC, centerCP);
-    
-    vec4 newColor = vec4(fragColor);
-    
-    float minDist = currentCursor.w * 1.5;
-    if (lineLength > minDist) {
-        // --- Animation Logic ---
-        float progress = clamp((iTime - iTimeCursorChange) / DURATION, 0.0, 1.0);
-        float shrinkFactor = ease(progress);
+     float lineLength = distance(centerCC, centerCP);
+	
+     vec4 newColor = vec4(fragColor);
+	
+     float minDist = currentCursor.w * 1.5;
+     float progress = clamp((iTime - iTimeCursorChange) / DURATION, 0.0, 1.0);
+     if (lineLength > minDist) {
+         // --- Animation Logic ---
+         float shrinkFactor = ease(progress);
 
         // detect straight moves
         vec2 delta = abs(centerCC - centerCP);
