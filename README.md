@@ -14,7 +14,7 @@
 - [ripple_rectangle_cursor.glsl](ripple_rectangle_cursor.glsl): Same as ripple_cursor but rectangular(cursor shape)
 
 ## Customization
-- All shaders has customizable parameters (like color, duration, size, blur, etc) etc at the top of each file. You can adjust
+- All shaders has customizable parameters (like color, duration, size, thickness, etc) etc at the top of each file. You can adjust
 - Also, all files has various **Easing Functions** to choose from.
   - these function control the animation curve of the effects, you can make them elasitcy, springy, smooth, linear, etc by changing the easing function
   - in trail shaders, you can comment/uncomment the easing functions in the code

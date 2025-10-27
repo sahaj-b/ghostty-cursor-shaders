@@ -1,9 +1,13 @@
 // --- CONFIGURATION ---
 vec4 TRAIL_COLOR = iCurrentCursorColor; // can change to eg: vec4(0.2, 0.6, 1.0, 0.5);
-const float DURATION = 0.2;   // total animation time (Neovide's `animation_length`)
+const float DURATION = 0.2; // total animation time
 const float TRAIL_SIZE = 0.8; // 0.0 = all corners move together. 1.0 = max smear (leading corners jump instantly)
 const float THRESHOLD_MIN_DISTANCE = 1.5; // min distance to show trail (units of cursor width)
-const float BLUR = 2.0; // blur size in pixels (for antialiasing)
+const float BLUR = 1.0; // blur size in pixels (for antialiasing)
+const float TRAIL_THICKNESS = 1.0;  // 1.0 = full cursor height, 0.0 = zero height, >1.0 = funky aah
+
+const float FADE_ENABLED = 0.0; // 1.0 to enable fade gradient along the trail, 0.0 to disable
+const float FADE_EXPONENT = 5.0; // exponent for fade gradient along the trail
 
 // --- CONSTANTS for easing functions ---
 const float PI = 3.14159265359;
@@ -119,8 +123,8 @@ vec2 normalize(vec2 value, float isPosition) {
     return (value * 2.0 - (iResolution.xy * isPosition)) / iResolution.y;
 }
 
-float antialising(float distance) {
-    return 1. - smoothstep(0., normalize(vec2(BLUR, BLUR), 0.).x, distance);
+float antialising(float distance, float blurAmount) {
+  return 1. - smoothstep(0., normalize(vec2(blurAmount, blurAmount), 0.).x, distance);
 }
 
 // Determines animation duration based on a corner's alignment with the move direction(dot product)
@@ -165,17 +169,45 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord){
 
     float baseProgress = iTime - iTimeCursorChange;
     
-    if (lineLength > minDist && baseProgress <= DURATION) {
+    if (lineLength > minDist && baseProgress < DURATION - 0.001) {
         // defining corners of cursors
-        vec2 cc_tl = currentCursor.xy;
-        vec2 cc_tr = vec2(currentCursor.x + currentCursor.z, currentCursor.y);
-        vec2 cc_bl = vec2(currentCursor.x, currentCursor.y - currentCursor.w);
-        vec2 cc_br = vec2(currentCursor.x + currentCursor.z, currentCursor.y - currentCursor.w);
 
-        vec2 cp_tl = previousCursor.xy;
-        vec2 cp_tr = vec2(previousCursor.x + previousCursor.z, previousCursor.y);
-        vec2 cp_bl = vec2(previousCursor.x, previousCursor.y - previousCursor.w);
-        vec2 cp_br = vec2(previousCursor.x + previousCursor.z, previousCursor.y - previousCursor.w);
+        // Y (Height) with TRAIL_THICKNESS
+        float cc_half_height = currentCursor.w * 0.5;
+        float cc_center_y = currentCursor.y - cc_half_height;
+        float cc_new_half_height = cc_half_height * TRAIL_THICKNESS;
+        float cc_new_top_y = cc_center_y + cc_new_half_height;
+        float cc_new_bottom_y = cc_center_y - cc_new_half_height;
+
+        // X (Width) with TRAIL_THICKNESS
+        float cc_half_width = currentCursor.z * 0.5;
+        float cc_center_x = currentCursor.x + cc_half_width;
+        float cc_new_half_width = cc_half_width * TRAIL_THICKNESS;
+        float cc_new_left_x = cc_center_x - cc_new_half_width;
+        float cc_new_right_x = cc_center_x + cc_new_half_width;
+
+        vec2 cc_tl = vec2(cc_new_left_x, cc_new_top_y);
+        vec2 cc_tr = vec2(cc_new_right_x, cc_new_top_y);
+        vec2 cc_bl = vec2(cc_new_left_x, cc_new_bottom_y);
+        vec2 cc_br = vec2(cc_new_right_x, cc_new_bottom_y);
+
+        // same thing for previous cursor
+        float cp_half_height = previousCursor.w * 0.5;
+        float cp_center_y = previousCursor.y - cp_half_height;
+        float cp_new_half_height = cp_half_height * TRAIL_THICKNESS;
+        float cp_new_top_y = cp_center_y + cp_new_half_height;
+        float cp_new_bottom_y = cp_center_y - cp_new_half_height;
+
+        float cp_half_width = previousCursor.z * 0.5;
+        float cp_center_x = previousCursor.x + cp_half_width;
+        float cp_new_half_width = cp_half_width * TRAIL_THICKNESS;
+        float cp_new_left_x = cp_center_x - cp_new_half_width;
+        float cp_new_right_x = cp_center_x + cp_new_half_width;
+
+        vec2 cp_tl = vec2(cp_new_left_x, cp_new_top_y);
+        vec2 cp_tr = vec2(cp_new_right_x, cp_new_top_y);
+        vec2 cp_bl = vec2(cp_new_left_x, cp_new_bottom_y);
+        vec2 cp_br = vec2(cp_new_right_x, cp_new_bottom_y);
 
         // calculating durations for every corner
         const float DURATION_TRAIL = DURATION;
@@ -229,12 +261,41 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord){
         // DRAWING THE TRAIL
         float sdfTrail = getSdfConvexQuad(vu, v_tl, v_tr, v_br, v_bl);
 
+        // --- FADE GRADIENT CALCULATION ---
+        vec2 fragVec = vu - centerCP;
+        
+        // project fragment onto movement vector, normalize to [0, 1]
+        // 0.0 at tail, 1.0 at head
+        // tiny epsilon to avoid division by zero if moveVec is (0,0)
+        float fadeProgress = clamp(dot(fragVec, moveVec) / (dot(moveVec, moveVec) + 1e-6), 0.0, 1.0);
+
         vec4 trail = TRAIL_COLOR;
-        float trailAlpha = antialising(sdfTrail);
-        newColor = mix(newColor, trail, trailAlpha);
+        
+        float effectiveBlur = BLUR;
+        if (BLUR < 0.25) {
+          // no antialising on horizontal/vertical movement, fixes 'pulse' like thing on end cursor
+          float isDiagonal = abs(s.x) * abs(s.y); // 1.0 if diagonal, 0.0 if H/V
+          float effectiveBlur = mix(0.0, BLUR, isDiagonal);
+        }
+        float shapeAlpha = antialising(sdfTrail, effectiveBlur); // shape mask
+
+        if (FADE_ENABLED > 0.5) {
+            // apply fade gradient along the trail
+            // float fadeStart = 0.2;
+            // float easedProgress = smoothstep(fadeStart, 1.0, fadeProgress);
+            // easedProgress = pow(2.0, 10.0 * (fadeProgress - 1.0));
+            float easedProgress = pow(fadeProgress, FADE_EXPONENT);
+            trail.a *= easedProgress;
+        }
+
+        float finalAlpha = trail.a * shapeAlpha;
+
+        // newColor.a to preserve the background alpha.
+        newColor = mix(newColor, vec4(trail.rgb, newColor.a), finalAlpha);
 
         // punch hole on the trail, so current cursor is drawn on top
         newColor = mix(newColor, fragColor, step(sdfCurrentCursor, 0.));
+
     }
 
     fragColor = newColor;
