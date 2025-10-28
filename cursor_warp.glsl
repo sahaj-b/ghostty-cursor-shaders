@@ -2,7 +2,7 @@
 vec4 TRAIL_COLOR = iCurrentCursorColor; // can change to eg: vec4(0.2, 0.6, 1.0, 0.5);
 const float DURATION = 0.2; // total animation time
 const float TRAIL_SIZE = 0.8; // 0.0 = all corners move together. 1.0 = max smear (leading corners jump instantly)
-const float THRESHOLD_MIN_DISTANCE = 1.5; // min distance to show trail (units of cursor width)
+const float THRESHOLD_MIN_DISTANCE = 1.5; // min distance to show trail (units of cursor height)
 const float BLUR = 1.0; // blur size in pixels (for antialiasing)
 const float TRAIL_THICKNESS = 1.0;  // 1.0 = full cursor height, 0.0 = zero height, >1.0 = funky aah
 
@@ -272,7 +272,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord){
         vec4 trail = TRAIL_COLOR;
         
         float effectiveBlur = BLUR;
-        if (BLUR < 0.25) {
+        if (BLUR < 2.5) {
           // no antialising on horizontal/vertical movement, fixes 'pulse' like thing on end cursor
           float isDiagonal = abs(s.x) * abs(s.y); // 1.0 if diagonal, 0.0 if H/V
           float effectiveBlur = mix(0.0, BLUR, isDiagonal);
