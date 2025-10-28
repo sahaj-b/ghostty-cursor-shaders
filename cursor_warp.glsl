@@ -5,6 +5,7 @@ const float TRAIL_SIZE = 0.8; // 0.0 = all corners move together. 1.0 = max smea
 const float THRESHOLD_MIN_DISTANCE = 1.5; // min distance to show trail (units of cursor height)
 const float BLUR = 1.0; // blur size in pixels (for antialiasing)
 const float TRAIL_THICKNESS = 1.0;  // 1.0 = full cursor height, 0.0 = zero height, >1.0 = funky aah
+const float TRAIL_THICKNESS_X = 0.9;
 
 const float FADE_ENABLED = 0.0; // 1.0 to enable fade gradient along the trail, 0.0 to disable
 const float FADE_EXPONENT = 5.0; // exponent for fade gradient along the trail
@@ -182,7 +183,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord){
         // X (Width) with TRAIL_THICKNESS
         float cc_half_width = currentCursor.z * 0.5;
         float cc_center_x = currentCursor.x + cc_half_width;
-        float cc_new_half_width = cc_half_width * TRAIL_THICKNESS;
+        float cc_new_half_width = cc_half_width * TRAIL_THICKNESS_X;
         float cc_new_left_x = cc_center_x - cc_new_half_width;
         float cc_new_right_x = cc_center_x + cc_new_half_width;
 
@@ -200,7 +201,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord){
 
         float cp_half_width = previousCursor.z * 0.5;
         float cp_center_x = previousCursor.x + cp_half_width;
-        float cp_new_half_width = cp_half_width * TRAIL_THICKNESS;
+        float cp_new_half_width = cp_half_width * TRAIL_THICKNESS_X;
         float cp_new_left_x = cp_center_x - cp_new_half_width;
         float cp_new_right_x = cp_center_x + cp_new_half_width;
 
