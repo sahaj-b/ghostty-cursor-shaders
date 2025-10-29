@@ -26,6 +26,9 @@
 - [ripple_rectangle_cursor.glsl](ripple_rectangle_cursor.glsl): Same as ripple_cursor but rectangular(cursor shape)
 
 
+> [!NOTE]
+> If you have the line cursor (default), these effects will trigger and freeze on unfocus(as cursor changes to hollow block). The solution is to add `custom-shader-animation = always` to your ghostty config
+
 ## Usage
 
 1. Clone the repo into your ghostty shaders directory:
@@ -40,6 +43,7 @@ custom-shader = shaders/yourshader2.glsl
 # ...
 ```
 Replace `yourshader` with the name of any shader file (e.g., `cursor_sweep`, `ripple_cursor`, etc.)
+
 
 ## Customization
 - All shaders has customizable parameters (like color, duration, size, thickness, etc) etc at the top of each file. You can adjust
