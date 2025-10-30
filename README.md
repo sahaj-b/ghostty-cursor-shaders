@@ -53,6 +53,30 @@ Replace `yourshader` with the name of any shader file (e.g., `cursor_sweep`, `ri
   - in pulse/boom shaders, you can comment/uncomment the lines in the `ANIMATION` section
   - you can also add your own easing functions if you want
 
+### Example (faded warp + ripple)
+```glsl
+// in cursor_warp.glsl
+const float DURATION = 0.15;
+const float TRAIL_SIZE = 0.8;
+const float THRESHOLD_MIN_DISTANCE = 1.0;
+const float BLUR = 1.0;
+const float TRAIL_THICKNESS = 1.0;
+const float TRAIL_THICKNESS_X = 0.9;
+
+const float FADE_ENABLED = 1.0;
+const float FADE_EXPONENT = 5.0;
+```
+```glsl
+// in ripple_cursor.glsl
+const float DURATION = 0.15;
+const float MAX_RADIUS = 0.026;
+const float RING_THICKNESS = 0.02;
+const float CURSOR_WIDTH_CHANGE_THRESHOLD = 0.5;
+vec4 COLOR = vec4(0.35, 0.36, 0.44, 0.8);
+const float BLUR = 3.5;
+const float ANIMATION_START_OFFSET = 0.01;
+```
+
 ## Acknowledgements
 Inspired by [Neovide](https://neovide.dev/) cursor animations and [KroneCorylus/ghostty-shader-playground](https://github.com/KroneCorylus/ghostty-shader-playground)
 
